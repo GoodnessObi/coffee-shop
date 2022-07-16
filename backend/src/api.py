@@ -112,3 +112,10 @@ def unprocessable(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
+
+# Test
+@app.route('/drinks', methods=["POST", "PATCH", "GET", "DELETE"])
+@requires_auth('get:drinks-detail')
+def index(jwt):
+    print(jwt)
+    return 'it works'
