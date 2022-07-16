@@ -31,17 +31,14 @@ db_drop_and_create_all()
 @app.route("/drinks")
 def retrieve_drinks():
     all_drinks = Drink.query.order_by(Drink.id).all()
-    drinks = []
-    for drink in all_drinks:
-        drinks.append(drink.short())
 
-    if len(drinks) == 0:
+    if len(all_drinks) == 0:
         abort(404)
 
     return jsonify(
         {
             "success": True,
-            "drinks": drinks,
+            "drinks": [drink.short() for drink in all_drinks],
         }
     )
 
@@ -57,17 +54,15 @@ def retrieve_drinks():
 @requires_auth('get:drinks-detail')
 def retrieve_drinks_detail(jwt):
     all_drinks = Drink.query.order_by(Drink.id).all()
-    drinks = []
-    for drink in all_drinks:
-        drinks.append(drink.long())
 
-    if len(drinks) == 0:
+    if len(all_drinks) == 0:
         abort(404)
 
     return jsonify(
         {
             "success": True,
-            "drinks": drinks,
+            "drinks": [drink.long() for drink in all_drinks],
+
         }
     )
 
@@ -94,14 +89,11 @@ def create_drink(jwt):
         drink.insert()
 
         all_drinks = Drink.query.order_by(Drink.id).all()
-        drinks = []
-        for drink in all_drinks:
-            drinks.append(drink.long())
 
         return jsonify(
             {
                 "success": True,
-                "drinks": drinks,
+                "drinks": [drink.long() for drink in all_drinks],
             }
         )
 
@@ -124,8 +116,10 @@ def create_drink(jwt):
 @requires_auth('patch:drinks')
 def update_drink(jwt, drink_id):
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if drink is None:
+        abort(404)
+
     req = request.get_json()
-    print('drinnnnnnnnnnk', drink.long())
 
     if 'title' in req: 
         req_title = req['title']
@@ -143,14 +137,11 @@ def update_drink(jwt, drink_id):
         drink.update()
 
         all_drinks = Drink.query.order_by(Drink.id).all()
-        drinks = []
-        for drink in all_drinks:
-            drinks.append(drink.long())
 
         return jsonify(
             {
                 "success": True,
-                "drinks": drinks,
+                "drinks": [drink.long() for drink in all_drinks],
             }
         )
 
@@ -169,10 +160,9 @@ def update_drink(jwt, drink_id):
 @app.route("/drinks/<int:drink_id>", methods=["DELETE"])
 @requires_auth('delete:drinks')
 def delete_question(jwt, drink_id):
-    print('idddddddddddddd', drink_id)
     try:
         drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
-        print('drink', drink)
+
         if drink is None:
             abort(404)
 
@@ -192,8 +182,6 @@ def delete_question(jwt, drink_id):
 '''
 Example error handling for unprocessable entity
 '''
-
-
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
@@ -205,12 +193,11 @@ def unprocessable(error):
 '''
 @TODO implement error handlers using the @app.errorhandler(error) decorator
     each error handler should return (with approprate messages):
-             jsonify({
-                    "success": False,
-                    "error": 404,
-                    "message": "resource not found"
-                    }), 404
-
+    jsonify({
+        "success": False,
+        "error": 404,
+        "message": "resource not found"
+    }), 404
 '''
 '''
 @TODO implement error handler for 404
@@ -227,9 +214,11 @@ def not_found(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
-@app.errorhandler(400)
-def bad_request(error):
-    return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+@app.errorhandler(AuthError)
+def handle_auth_error(err):
+    response = jsonify(err.error)
+    response.status_code = err.status_code
+    return response
 
 @app.errorhandler(405)
 def not_found(error):
