@@ -120,30 +120,27 @@ def create_drink(jwt):
         or appropriate status code indicating reason for failure
 '''
 
-@app.route("/drinks<int:drink_id>", methods=["PATCH"])
+@app.route("/drinks/<int:drink_id>", methods=["PATCH"])
 @requires_auth('patch:drinks')
 def update_drink(jwt, drink_id):
-    drink = Drink.query.filter(Drink.id == drink_id).one_or_none
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
     req = request.get_json()
+    print('drinnnnnnnnnnk', drink.long())
 
-    req_title = req['title']
-    req_recipe = json.dumps(req['recipe'])
+    if 'title' in req: 
+        req_title = req['title']
 
-    updated_title=drink['title']
-    updated_recipe = drink['recipe']
-
-    if req_title != drink['title']:
-        updated_title = req_title
-
-    if req_recipe != drink['recipe']:
-        updated_recipe = req_recipe
+    if 'recipe' in req:
+        req_recipe = json.dumps(req['recipe'])
 
     try:
-        updated_drink = Drink(
-            title=updated_title,
-            recipe=updated_recipe,
-        )
-        drink.update(updated_drink)
+        if 'title' in req:
+            drink.title = req_title
+            
+        if 'recipe' in req:
+            drink.recipe = req_recipe
+
+        drink.update()
 
         all_drinks = Drink.query.order_by(Drink.id).all()
         drinks = []
