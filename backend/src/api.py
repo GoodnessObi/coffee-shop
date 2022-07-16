@@ -84,10 +84,8 @@ def retrieve_drinks_detail(jwt):
 @requires_auth('post:drinks')
 def create_drink(jwt):
     body = request.get_json()
-
-    req_title = body.get("title", None)
-    req_recipe = body.get("recipe", None)
-
+    req_title = body['title']
+    req_recipe = json.dumps(body['recipe'])
     try:
         drink = Drink(
             title=req_title,
@@ -122,7 +120,45 @@ def create_drink(jwt):
         or appropriate status code indicating reason for failure
 '''
 
+@app.route("/drinks<int:drink_id>", methods=["PATCH"])
+@requires_auth('patch:drinks')
+def update_drink(jwt, drink_id):
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none
+    req = request.get_json()
 
+    req_title = req['title']
+    req_recipe = json.dumps(req['recipe'])
+
+    updated_title=drink['title']
+    updated_recipe = drink['recipe']
+
+    if req_title != drink['title']:
+        updated_title = req_title
+
+    if req_recipe != drink['recipe']:
+        updated_recipe = req_recipe
+
+    try:
+        updated_drink = Drink(
+            title=updated_title,
+            recipe=updated_recipe,
+        )
+        drink.update(updated_drink)
+
+        all_drinks = Drink.query.order_by(Drink.id).all()
+        drinks = []
+        for drink in all_drinks:
+            drinks.append(drink.long())
+
+        return jsonify(
+            {
+                "success": True,
+                "drinks": drinks,
+            }
+        )
+
+    except:
+        abort(422)
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -135,10 +171,11 @@ def create_drink(jwt):
 '''
 @app.route("/drinks/<int:drink_id>", methods=["DELETE"])
 @requires_auth('delete:drinks')
-def delete_question(drink_id, jwt):
+def delete_question(jwt, drink_id):
+    print('idddddddddddddd', drink_id)
     try:
         drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
-
+        print('drink', drink)
         if drink is None:
             abort(404)
 
