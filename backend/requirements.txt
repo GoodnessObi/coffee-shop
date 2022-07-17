@@ -39,3 +39,4 @@ typed-ast
 Werkzeug
 wrapt
 Flask-Cors
+python-dotenv
