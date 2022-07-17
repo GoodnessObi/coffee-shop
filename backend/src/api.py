@@ -88,12 +88,10 @@ def create_drink(jwt):
         )
         drink.insert()
 
-        all_drinks = Drink.query.order_by(Drink.id).all()
-
         return jsonify(
             {
                 "success": True,
-                "drinks": [drink.long() for drink in all_drinks],
+                "drinks": [drink.long()],
             }
         )
 
@@ -136,12 +134,10 @@ def update_drink(jwt, drink_id):
 
         drink.update()
 
-        all_drinks = Drink.query.order_by(Drink.id).all()
-
         return jsonify(
             {
                 "success": True,
-                "drinks": [drink.long() for drink in all_drinks],
+                "drinks": [drink.long()],
             }
         )
 
